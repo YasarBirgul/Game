@@ -13,6 +13,7 @@ namespace Enemies
         [SerializeField]
         private Animator animator;
         private const string Walk = "Walk";
+        private const string Idle = "Idle";
         private Coroutine FollowCoroutine;
 
         private void Awake()
@@ -23,12 +24,12 @@ namespace Enemies
         private void Update()
         {
             animator.SetBool(Walk,_agent.velocity.magnitude> 0.01f);
-            animator.SetBool(Walk,_agent.velocity.magnitude !> 0.01f);
+            animator.SetBool(Idle,_agent.velocity.magnitude !> 0.01f);
         }
 
         public void StartChasing()
         {
-            if (FollowCoroutine != null)
+            if (FollowCoroutine == null)
             {
                FollowCoroutine = StartCoroutine(FollowTarget());
             }
@@ -41,6 +42,7 @@ namespace Enemies
             while (gameObject.activeSelf)
             {
                 _agent.SetDestination(Player.transform.position);
+                Debug.Log(Player.transform.position);
                 yield return wait;
             }
         }

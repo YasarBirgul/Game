@@ -71,7 +71,7 @@ namespace General
                 int VertexIndex = Random.Range(0, _triangulation.vertices.Length);
                 NavMeshHit Hit;
 
-                if (NavMesh.SamplePosition(_triangulation.vertices[VertexIndex], out Hit, 2f, 0))
+                if (NavMesh.SamplePosition(_triangulation.vertices[VertexIndex], out Hit, 2f, -1))
                 {
                     enemy.Agent.Warp(Hit.position);
                     enemy.Movement.Player = Player;
