@@ -7,17 +7,17 @@ namespace Enemies
     [RequireComponent(typeof(NavMeshAgent))]
     public class EnemyMovement: MonoBehaviour
     {
-        public Transform Target;
+        public Transform Player;
         public float UpdateSpeed;
         private NavMeshAgent _agent;
         [SerializeField]
         private Animator animator;
         private const string Walk = "Walk";
+        private Coroutine FollowCoroutine;
 
         private void Awake()
         {
             _agent = GetComponent<NavMeshAgent>();
-            
         }
 
         private void Update()
@@ -26,18 +26,21 @@ namespace Enemies
             animator.SetBool(Walk,_agent.velocity.magnitude !> 0.01f);
         }
 
-        private void Start()
+        public void StartChasing()
         {
-            StartCoroutine(FollowTarget());
+            if (FollowCoroutine != null)
+            {
+               FollowCoroutine = StartCoroutine(FollowTarget());
+            }
         }
 
         private IEnumerator FollowTarget()
         {
             WaitForSeconds wait = new WaitForSeconds(UpdateSpeed);
 
-            while (enabled)
+            while (gameObject.activeSelf)
             {
-                _agent.SetDestination(Target.transform.position);
+                _agent.SetDestination(Player.transform.position);
                 yield return wait;
             }
         }

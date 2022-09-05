@@ -1,9 +1,11 @@
-﻿using System.Collections;
+﻿using System;
+using System.Collections;
 using System.Collections.Generic;
-using ObjectPool;
+using ObjectPooler;
 using UnityEngine;
 using Enemies;
 using UnityEngine.AI;
+using Random = UnityEngine.Random;
 
 namespace General
 {
@@ -14,45 +16,47 @@ namespace General
         public float SpawnDelay = 1f;
         public List<Enemy> EnemyPrefabs = new List<Enemy>();
         public SpawnMethod EnemySpawnMethod = SpawnMethod.RoundRobin;
+        private NavMeshTriangulation _triangulation;
     
-        private Dictionary<int, ObjectPool.ObjectPool> EnemyObjectPool = new Dictionary<int, ObjectPool.ObjectPool>(); 
+        private Dictionary<int, ObjectPool> EnemyObjectPool = new Dictionary<int, ObjectPool>(); 
         private void Awake()
         {
             for (int i = 0; i < EnemyPrefabs.Count; i++)
             {
-                 EnemyObjectPool.Add(i,ObjectPool.ObjectPool.CreateInstance(EnemyPrefabs[i],NumberOfEnemiesToSpawm));            
+                 EnemyObjectPool.Add(i,ObjectPool.CreateInstance(EnemyPrefabs[i],NumberOfEnemiesToSpawm));            
             }   
         } 
         private void Start()
-        {
+        { 
+            _triangulation = NavMesh.CalculateTriangulation();
             StartCoroutine(SpawnEnemies());
         }
         private IEnumerator SpawnEnemies()
         {
             WaitForSeconds wait = new WaitForSeconds(SpawnDelay);
-            int SpawnEnemies = 0;
+            int SpawnedEnemies = 0;
 
-            while (SpawnEnemies < NumberOfEnemiesToSpawm)
+            while (SpawnedEnemies < NumberOfEnemiesToSpawm)
             {
                 if (EnemySpawnMethod == SpawnMethod.RoundRobin)
                 {
-                    SpawnRoundRobinEnemy(SpawnEnemies);
+                    SpawnRoundRobinEnemy(SpawnedEnemies);
                 }
                 else if (EnemySpawnMethod == SpawnMethod.Random)
                 {
-                    
+                    SpawnRandomEnemy();
                 }
-                SpawnEnemies++;
+                SpawnedEnemies++;
                 yield return wait;
             }
         }
-        private void SpawnRoundRobinEnemy(int SpawnedEnemy)
+        private void SpawnRoundRobinEnemy(int SpawnedEnemies)
         {
-            int SpawnIndex = SpawnedEnemy % EnemyPrefabs.Count;
+            int SpawnIndex = SpawnedEnemies % EnemyPrefabs.Count;
             
-            DoSpawnEnemy(SpawnedEnemy);
+            DoSpawnEnemy(SpawnIndex);
         }
-        private void SpawnRandomEnemy(int SpawnIndex)
+        private void SpawnRandomEnemy()
         {
             DoSpawnEnemy(Random.Range(0,EnemyPrefabs.Count));
         }
@@ -64,12 +68,16 @@ namespace General
             if (poolableObject != null)
             {
                 Enemy enemy = poolableObject.GetComponent<Enemy>();
-                NavMeshTriangulation triangulation = NavMesh.CalculateTriangulation();
+                int VertexIndex = Random.Range(0, _triangulation.vertices.Length);
+                NavMeshHit Hit;
 
-            }
-            else
-            {
-                
+                if (NavMesh.SamplePosition(_triangulation.vertices[VertexIndex], out Hit, 2f, 0))
+                {
+                    enemy.Agent.Warp(Hit.position);
+                    enemy.Movement.Player = Player;
+                    enemy.Agent.enabled = true;
+                    enemy.Movement.StartChasing();
+                }
             }
         }
         public enum SpawnMethod
