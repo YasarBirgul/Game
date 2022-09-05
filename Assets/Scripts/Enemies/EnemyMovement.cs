@@ -24,7 +24,7 @@ namespace Enemies
         private void Update()
         {
             animator.SetBool(Walk,_agent.velocity.magnitude> 0.01f);
-            animator.SetBool(Idle,_agent.velocity.magnitude !> 0.01f);
+            animator.SetBool(Idle,_agent.velocity.magnitude == 0f);
         }
 
         public void StartChasing()
@@ -42,7 +42,6 @@ namespace Enemies
             while (gameObject.activeSelf)
             {
                 _agent.SetDestination(Player.transform.position);
-                Debug.Log(Player.transform.position);
                 yield return wait;
             }
         }
